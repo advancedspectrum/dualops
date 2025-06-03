@@ -417,9 +417,11 @@
         
         pendingRequests.forEach(incident => {
           const li = document.createElement('li');
+          const requestSource = incident.autoAppraisalSource === 'CHP' ? '(Auto from CHP)' : '(Manual from NewEco)';
           li.innerHTML = `
             <span class="status-indicator status-processing"></span>
             ${incident.incidentId} - ${incident.insuredName || 'Unknown'} 
+            <small>${requestSource}</small><br>
             <small>(Received: ${new Date(incident.timestamp).toLocaleTimeString()})</small>
           `;
           queueEl.appendChild(li);
@@ -458,6 +460,8 @@
     }
 
     // CHP Functions
+    let chpProcessingTimeouts = new Map(); // Track CHP auto-appraisal timeouts
+    
     function updateCHPDisplay() {
       const statusEl = document.getElementById('chpStatus');
       const listEl = document.getElementById('claimList');
@@ -486,6 +490,14 @@
             statusClass = 'status-processing';
             statusText = 'Appraisal Pending';
           }
+        } else if (incident.chpAutoAppraisal) {
+          if (incident.appraisalId) {
+            statusClass = 'status-completed';
+            statusText = 'Auto Appraisal: ' + incident.appraisalId;
+          } else {
+            statusClass = 'status-processing';
+            statusText = 'Auto Appraisal Processing';
+          }
         }
         
         li.innerHTML = `
@@ -495,7 +507,44 @@
           <small>${statusText}</small>
         `;
         listEl.appendChild(li);
+        
+        // Trigger auto-appraisal for claims without manual appraisal request
+        if (!incident.appraisalRequested && !incident.chpAutoAppraisal && !chpProcessingTimeouts.has(incident.incidentId)) {
+          triggerCHPAutoAppraisal(incident);
+        }
       });
+    }
+    
+    function triggerCHPAutoAppraisal(incident) {
+      // Mark as auto-appraisal processing
+      incident.chpAutoAppraisal = true;
+      incident.chpAutoAppraisalTriggered = new Date().toISOString();
+      
+      // Set timeout for 5 seconds
+      const timeoutId = setTimeout(() => {
+        // Request appraisal from CCC
+        incident.appraisalRequested = true;
+        incident.appraisalStatus = 'auto_processing';
+        incident.autoAppraisalSource = 'CHP';
+        
+        // Add to CCC processing queue
+        cccProcessingQueue.push(incident.incidentId);
+        
+        // Update displays
+        updateAllDisplays();
+        
+        // Log the auto-trigger
+        console.log(`CHP auto-triggered appraisal for incident ${incident.incidentId}`);
+        
+        // Remove from timeout tracking
+        chpProcessingTimeouts.delete(incident.incidentId);
+      }, 5000);
+      
+      // Track the timeout
+      chpProcessingTimeouts.set(incident.incidentId, timeoutId);
+      
+      // Update display to show processing
+      updateCHPDisplay();
     }
 
     function refreshClaims() {
