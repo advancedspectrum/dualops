@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Integrated Incident Management System</title>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      padding: 20px; 
+      max-width: 800px; 
+      margin: auto; 
+      background-color: #f5f5f5;
+    }
+    
+    .app-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .app-panel {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .logo { 
+      font-size: 20px; 
+      font-weight: bold; 
+      margin-bottom: 15px; 
+      text-align: center;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    .neweco-logo { background-color: #2c3e50; color: white; }
+    .ccc-logo { background-color: navy; color: white; }
+    .chp-logo { background-color: darkred; color: white; }
+    
+    .screen { display: none; }
+    .screen.active { display: block; }
+    
+    label { 
+      display: block; 
+      margin-top: 10px; 
+      font-weight: 500;
+    }
+    
+    input, textarea { 
+      width: 100%; 
+      padding: 8px; 
+      margin-top: 4px; 
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    button { 
+      margin-top: 15px; 
+      margin-right: 10px;
+      padding: 10px 15px; 
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    .info { 
+      margin-top: 15px; 
+      padding: 10px;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 4px;
+      color: #155724;
+      font-weight: bold;
+    }
+    
+    .warning {
+      background-color: #fff3cd;
+      border-color: #ffeaa7;
+      color: #856404;
+    }
+    
+    .error {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    
+    ul { 
+      list-style: none; 
+      padding: 0; 
+    }
+    
+    li { 
+      padding: 8px 12px; 
+      margin: 5px 0;
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+      border-radius: 4px;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-pending { background-color: orange; }
+    .status-processing { background-color: blue; }
+    .status-completed { background-color: green; }
+    
+    .system-status {
+      text-align: center;
+      margin-bottom: 15px;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .status-online {
+      background-color: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">Integrated Incident Management System</h1>
+  
+  <div class="app-container">
+    <!-- NewEco Application -->
+    <div class="app-panel">
+      <div class="logo neweco-logo">NewEco</div>
+      <div class="system-status status-online">System Online</div>
+      
+      <div class="screen active" id="incidentFormScreen">
+        <h3>Create Incident</h3>
+        <label>Insured Name:
+          <input type="text" id="insuredName" placeholder="Enter insured name" />
+        </label>
+        <label>Policy Number:
+          <input type="text" id="policyNumber" placeholder="Enter policy number" />
+        </label>
+        <label>Incident Details:
+          <textarea id="incidentDetails" rows="4" placeholder="Describe the incident..."></textarea>
+        </label>
+        <label>
+          <input type="checkbox" id="cccAppraisalCheckbox" onchange="handleCCCCheckbox()" /> 
+          Request appraisal from CCC
+        </label>
+        <button onclick="goToLossConsult()">Loss Consult</button>
+        <button onclick="submitIncident()" style="background-color: #27ae60;">Submit Incident</button>
+        <div id="appraisalInfo"></div>
+      </div>
+
+      <div class="screen" id="lossConsultScreen">
+        <h3>Loss Consult</h3>
+        <label>Enter Details:
+          <textarea id="lossConsultText" rows="4" placeholder="Enter loss consultation details..."></textarea>
+        </label>
+        <button onclick="saveLossConsult()">Save</button>
+        <button onclick="goBackToIncident()" style="background-color: #95a5a6;">Back</button>
+      </div>
+
+      <div class="screen" id="lossSavedScreen">
+        <h3>Loss Consult Saved</h3>
+        <div class="info">Loss consultation has been saved successfully.</div>
+        <button onclick="goBackToIncident()">Back to Incident</button>
+      </div>
+
+      <div class="screen" id="submitConfirmationScreen">
+        <h3>Incident Submitted</h3>
+        <div class="info">
+          <p id="incidentNumberText"></p>
+          <p id="claimNumberText"></p>
+          <p id="appraisalStatusText"></p>
+        </div>
+        <button onclick="createNewIncident()">Create New Incident</button>
+      </div>
+    </div>
+
+    <!-- CCC Appraisal System -->
+    <div class="app-panel">
+      <div class="logo ccc-logo">CCC Appraisal</div>
+      <div class="system-status status-online">System Online</div>
+      
+      <h3>Appraisal Requests</h3>
+      <div id="cccStatus" class="info warning">Monitoring for requests...</div>
+      <div id="cccOutput"></div>
+      
+      <h4>Request Queue:</h4>
+      <ul id="appraisalQueue"></ul>
+    </div>
+
+    <!-- CHP Claims System -->
+    <div class="app-panel">
+      <div class="logo chp-logo">CHP Claims</div>
+      <div class="system-status status-online">System Online</div>
+      
+      <h3>Claims and Appraisals</h3>
+      <div id="chpStatus" class="info">Ready to display claims</div>
+      <ul id="claimList"></ul>
+      
+      <button onclick="refreshClaims()" style="background-color: #e74c3c;">Refresh Claims</button>
+    </div>
+  </div>
+
+  <script>
+    // Global state management
+    let incidents = [];
+    let currentIncidentId = null;
+    let pollingInterval = null;
+    let cccProcessingQueue = [];
+
+    // Utility functions
+    function generateIncidentId() {
+      return 'NewEco-INC-' + Math.floor(Math.random() * 900 + 100);
+    }
+
+    function generateClaimId() {
+      return 'CHP-Claim-' + Math.floor(Math.random() * 900 + 100);
+    }
+
+    function generateAppraisalId() {
+      return 'CCC-APP-' + (1000 + Math.floor(Math.random() * 900));
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(id).classList.add('active');
+    }
+
+    function updateAllDisplays() {
+      updateCCCDisplay();
+      updateCHPDisplay();
+    }
+
+    // NewEco Functions
+    function goToLossConsult() {
+      showScreen('lossConsultScreen');
+    }
+
+    function goBackToIncident() {
+      showScreen('incidentFormScreen');
+    }
+
+    function saveLossConsult() {
+      const consultText = document.getElementById('lossConsultText').value;
+      if (currentIncidentId) {
+        const incident = incidents.find(i => i.incidentId === currentIncidentId);
+        if (incident) {
+          incident.lossConsult = consultText;
+        }
+      }
+      showScreen('lossSavedScreen');
+    }
+
+    function handleCCCCheckbox() {
+      const checked = document.getElementById('cccAppraisalCheckbox').checked;
+      const appraisalInfo = document.getElementById('appraisalInfo');
+      
+      if (checked && !currentIncidentId) {
+        currentIncidentId = generateIncidentId();
+        const newRecord = {
+          incidentId: currentIncidentId,
+          insuredName: document.getElementById('insuredName').value,
+          policyNumber: document.getElementById('policyNumber').value,
+          incidentDetails: document.getElementById('incidentDetails').value,
+          claimId: null,
+          appraisalRequested: true,
+          appraisalId: null,
+          appraisalStatus: 'pending',
+          timestamp: new Date().toISOString()
+        };
+        incidents.push(newRecord);
+        
+        appraisalInfo.innerHTML = '<div class="info warning">Appraisal request queued. Waiting for CCC response...</div>';
+        
+        // Add to CCC processing queue
+        cccProcessingQueue.push(currentIncidentId);
+        updateAllDisplays();
+        startAppraisalPolling();
+      } else if (!checked && currentIncidentId) {
+        const incident = incidents.find(i => i.incidentId === currentIncidentId);
+        if (incident && !incident.claimId) {
+          incident.appraisalRequested = false;
+          incident.appraisalStatus = 'cancelled';
+          cccProcessingQueue = cccProcessingQueue.filter(id => id !== currentIncidentId);
+          appraisalInfo.innerHTML = '';
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+          }
+          updateAllDisplays();
+        }
+      }
+    }
+
+    function submitIncident() {
+      const insuredName = document.getElementById('insuredName').value;
+      const policyNumber = document.getElementById('policyNumber').value;
+      const incidentDetails = document.getElementById('incidentDetails').value;
+      
+      if (!insuredName || !policyNumber || !incidentDetails) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const claimId = generateClaimId();
+
+      if (!currentIncidentId) {
+        currentIncidentId = generateIncidentId();
+        const newRecord = {
+          incidentId: currentIncidentId,
+          insuredName,
+          policyNumber,
+          incidentDetails,
+          claimId,
+          appraisalRequested: false,
+          appraisalId: null,
+          appraisalStatus: 'not_requested',
+          timestamp: new Date().toISOString()
+        };
+        incidents.push(newRecord);
+      } else {
+        const incident = incidents.find(i => i.incidentId === currentIncidentId);
+        if (incident) {
+          incident.claimId = claimId;
+          incident.insuredName = insuredName;
+          incident.policyNumber = policyNumber;
+          incident.incidentDetails = incidentDetails;
+        }
+      }
+
+      document.getElementById('incidentNumberText').innerText = 'Incident Number: ' + currentIncidentId;
+      document.getElementById('claimNumberText').innerText = 'Claim Number: ' + claimId;
+      
+      const incident = incidents.find(i => i.incidentId === currentIncidentId);
+      const appraisalStatusEl = document.getElementById('appraisalStatusText');
+      
+      if (incident && incident.appraisalRequested) {
+        if (incident.appraisalId) {
+          appraisalStatusEl.innerText = 'Appraisal ID: ' + incident.appraisalId;
+        } else {
+          appraisalStatusEl.innerText = 'Appraisal Status: Pending CCC response';
+        }
+      } else {
+        appraisalStatusEl.innerText = '';
+      }
+      
+      updateAllDisplays();
+      showScreen('submitConfirmationScreen');
+    }
+
+    function createNewIncident() {
+      // Reset form
+      document.getElementById('insuredName').value = '';
+      document.getElementById('policyNumber').value = '';
+      document.getElementById('incidentDetails').value = '';
+      document.getElementById('lossConsultText').value = '';
+      document.getElementById('cccAppraisalCheckbox').checked = false;
+      document.getElementById('appraisalInfo').innerHTML = '';
+      
+      currentIncidentId = null;
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+      }
+      
+      showScreen('incidentFormScreen');
+    }
+
+    function startAppraisalPolling() {
+      if (pollingInterval) return; // Already polling
+      
+      pollingInterval = setInterval(() => {
+        const incident = incidents.find(i => i.incidentId === currentIncidentId);
+        if (incident && incident.appraisalId) {
+          document.getElementById('appraisalInfo').innerHTML = 
+            '<div class="info">Appraisal ID received: ' + incident.appraisalId + '</div>';
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+        }
+      }, 2000); // Check every 2 seconds
+    }
+
+    // CCC Functions
+    function updateCCCDisplay() {
+      const statusEl = document.getElementById('cccStatus');
+      const outputEl = document.getElementById('cccOutput');
+      const queueEl = document.getElementById('appraisalQueue');
+      
+      // Update queue display
+      queueEl.innerHTML = '';
+      const pendingRequests = incidents.filter(i => i.appraisalRequested && !i.appraisalId);
+      
+      if (pendingRequests.length === 0) {
+        statusEl.innerHTML = '<div class="info">No pending appraisal requests</div>';
+        queueEl.innerHTML = '<li>No requests in queue</li>';
+      } else {
+        statusEl.innerHTML = '<div class="info warning">Processing ' + pendingRequests.length + ' request(s)</div>';
+        
+        pendingRequests.forEach(incident => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <span class="status-indicator status-processing"></span>
+            ${incident.incidentId} - ${incident.insuredName || 'Unknown'} 
+            <small>(Received: ${new Date(incident.timestamp).toLocaleTimeString()})</small>
+          `;
+          queueEl.appendChild(li);
+        });
+      }
+      
+      // Process pending requests
+      processCCCRequests();
+    }
+
+    function processCCCRequests() {
+      const pendingRequests = incidents.filter(i => i.appraisalRequested && !i.appraisalId);
+      
+      pendingRequests.forEach(incident => {
+        if (!incident.processing) {
+          incident.processing = true;
+          incident.appraisalStatus = 'processing';
+          
+          // Simulate processing delay (5-10 seconds)
+          const delay = Math.random() * 5000 + 5000;
+          
+          setTimeout(() => {
+            const appraisalId = generateAppraisalId();
+            incident.appraisalId = appraisalId;
+            incident.appraisalStatus = 'completed';
+            incident.processing = false;
+            
+            updateAllDisplays();
+            
+            // Update output
+            document.getElementById('cccOutput').innerHTML = 
+              '<div class="info">Latest: Assigned appraisal ID ' + appraisalId + ' to incident ' + incident.incidentId + '</div>';
+          }, delay);
+        }
+      });
+    }
+
+    // CHP Functions
+    function updateCHPDisplay() {
+      const statusEl = document.getElementById('chpStatus');
+      const listEl = document.getElementById('claimList');
+      
+      const claimsWithIds = incidents.filter(i => i.claimId);
+      
+      if (claimsWithIds.length === 0) {
+        statusEl.innerHTML = '<div class="info warning">No claims found</div>';
+        listEl.innerHTML = '<li>No claims to display</li>';
+        return;
+      }
+      
+      statusEl.innerHTML = '<div class="info">Displaying ' + claimsWithIds.length + ' claim(s)</div>';
+      listEl.innerHTML = '';
+      
+      claimsWithIds.forEach(incident => {
+        const li = document.createElement('li');
+        let statusClass = 'status-pending';
+        let statusText = 'No Appraisal';
+        
+        if (incident.appraisalRequested) {
+          if (incident.appraisalId) {
+            statusClass = 'status-completed';
+            statusText = 'Appraisal: ' + incident.appraisalId;
+          } else {
+            statusClass = 'status-processing';
+            statusText = 'Appraisal Pending';
+          }
+        }
+        
+        li.innerHTML = `
+          <span class="status-indicator ${statusClass}"></span>
+          <strong>${incident.claimId}</strong><br>
+          <small>Incident: ${incident.incidentId} | ${incident.insuredName || 'Unknown'}</small><br>
+          <small>${statusText}</small>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function refreshClaims() {
+      updateCHPDisplay();
+    }
+
+    // Initialize the application
+    function initialize() {
+      updateAllDisplays();
+      
+      // Start CCC monitoring
+      setInterval(updateCCCDisplay, 3000); // Check every 3 seconds
+    }
+
+    // Start the application when page loads
+    window.addEventListener('load', initialize);
+  </script>
+</body>
+</html>
