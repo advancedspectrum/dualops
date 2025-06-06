@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrated Incident Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .left-panel {
+            grid-row: 1 / span 3;
+        }
+
+        .top-right-panel {
+            grid-column: 2;
+        }
+
+        .bottom-right-panel {
+            grid-column: 2;
+        }
+
+        .status-boxes {
+            grid-column: 2; /* This will be overridden by the change below */
+            display: flex;
+            gap: 10px;
+            height: 120px;
+            margin-top: 20px; /* Added margin for spacing within the panel */
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .neweco-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+        }
+
+        .ccc-header {
+            background: linear-gradient(135deg, #1a365d, #2d5aa0);
+        }
+
+        .chp-header {
+            background: linear-gradient(135deg, #8b1538, #c53030);
+        }
+
+        .status-online {
+            background: #27ae60;
+            color: white;
+            padding: 5px 15px;
+            font-size: 12px;
+            margin-top: 5px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-blue {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-blue:hover {
+            background: #2980b9;
+        }
+
+        .btn-green {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-green:hover {
+            background: #219a52;
+        }
+
+        .btn-red {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-red:hover {
+            background: #c0392b;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .status-message {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #0c5460;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .warning-message {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .queue-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .processing-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffc107;
+            margin-right: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .claim-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .claim-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-pending {
+            background: #ffc107;
+        }
+
+        .status-processing {
+            background: #007bff;
+        }
+
+        .status-completed {
+            background: #28a745;
+        }
+
+        .claim-id {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .claim-details {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .appraisal-status {
+            font-size: 13px;
+            color: #007bff;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .section-title {
+            font-weight: bold;
+            color: #333;
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .latest-assignment {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 5px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .no-items {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .status-box {
+            flex: 1;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .status-box h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status-box.grey {
+            background: #6c757d;
+            border-color: #5a6268;
+            color: white;
+        }
+
+        .status-box.grey h3 {
+            color: white;
+        }
+
+        .status-box.active {
+            background: #ffc107;
+            border-color: #e0a800;
+            color: #212529;
+            animation: glow 1s ease-in-out 3;
+        }
+
+        .status-box.active h3 {
+            color: #212529;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(255, 193, 7, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 193, 7, 0.5); }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+            }
+
+            .left-panel {
+                grid-row: 1;
+            }
+
+            .top-right-panel {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            .bottom-right-panel {
+                grid-column: 1;
+                grid-row: 3;
+            }
+
+            .status-boxes {
+                grid-column: 1;
+                grid-row: 4; /* This will be overridden by the change below */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel left-panel">
+            <div class="panel-header neweco-header">
+                NewEco
+                <div class="status-online">System Online</div>
+            </div>
+            <div class="panel-content">
+                <div id="incidentForm" class="screen active">
+                    <div class="form-group">
+                        <label for="insuredName">Insured Name</label>
+                        <input type="text" id="insuredName" placeholder="Enter insured party name">
+                    </div>
+                    <div class="form-group">
+                        <label for="policyNumber">Policy Number</label>
+                        <input type="text" id="policyNumber" placeholder="Enter policy number">
+                    </div>
+                    <div class="form-group">
+                        <label for="incidentDetails">Incident Details</label>
+                        <textarea id="incidentDetails" placeholder="Describe the incident details"></textarea>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="requestAppraisal">
+                        <label for="requestAppraisal">Request appraisal from CCC</label>
+                    </div>
+                    <div id="appraisalStatus"></div>
+                    <div class="button-group">
+                        <button class="btn btn-blue" onclick="showLossConsult()">Loss Consult</button>
+                        <button class="btn btn-green" onclick="submitIncident()">Submit Incident</button>
+                    </div>
+                </div>
+
+                <div id="lossConsultScreen" class="screen">
+                    <h3>Loss Consult Details</h3>
+                    <div class="form-group">
+                        <label for="lossConsultDetails">Additional Details</label>
+                        <textarea id="lossConsultDetails" placeholder="Enter additional loss consultation details"></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-green" onclick="saveLossConsult()">Save</button>
+                        <button class="btn" onclick="showIncidentForm()">Back</button>
+                    </div>
+                </div>
+
+                <div id="lossSavedScreen" class="screen">
+                    <div class="success-message">
+                        <h3>Loss Consult Saved Successfully</h3>
+                        <p>Your loss consultation details have been saved.</p>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-blue" onclick="showIncidentForm()">Back to Incident</button>
+                    </div>
+                </div>
+
+                <div id="submitConfirmationScreen" class="screen">
+                    <div class="success-message">
+                        <h3>Incident Submitted Successfully</h3>
+                        <div id="confirmationDetails"></div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-green" onclick="createNewIncident()">Create New Incident</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel top-right-panel">
+            <div class="panel-header ccc-header">
+                CCC Appraisal
+                <div class="status-online">System Online</div>
+            </div>
+            <div class="panel-content">
+                <div id="cccStatus" class="status-message">
+                    No pending requests
+                </div>
+                
+                <div class="section-title">Latest:</div>
+                <div id="latestAssignment" class="latest-assignment">
+                    No recent assignments
+                </div>
+
+                <div class="section-title">Request Queue:</div>
+                <div id="requestQueue">
+                    <div class="no-items">No requests in queue</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel bottom-right-panel">
+            <div class="panel-header chp-header">
+                Legacy Claims System
+                <div class="status-online">System Online</div>
+            </div>
+            <div class="panel-content">
+                <div id="claimsStatus" class="status-message">
+                    0 claims displayed
+                </div>
+                
+                <div class="status-boxes">
+                    <div class="status-box" id="cccAppraisalBox">
+                        <h3>CCC Appraisal</h3>
+                        <div></div>
+                    </div>
+                    <div class="status-box">
+                        <h3>Other System 1</h3>
+                        <div></div>
+                    </div>
+                    <div class="status-box">
+                        <h3>Other System 2</h3>
+                        <div></div>
+                    </div>
+                </div>
+                
+               
+                
+                <div id="claimsList">
+                    <div class="no-items">No claims submitted</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data storage
+        let incidents = [];
+        let appraisalQueue = [];
+        let latestAppraisal = null;
+        let pendingAppraisalChecks = new Map();
+        let autoAppraisalTimeouts = new Map();
+
+        // Initialize the system
+        function initSystem() {
+            setInterval(updateAllPanels, 2000);
+            setInterval(processCCCQueue, 3000);
+        }
+
+        // Screen management functions
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showIncidentForm() {
+            showScreen('incidentForm');
+        }
+
+        function showLossConsult() {
+            showScreen('lossConsultScreen');
+        }
+
+        function saveLossConsult() {
+            showScreen('lossSavedScreen');
+        }
+
+        function createNewIncident() {
+            clearForm();
+            // Clear the current appraisal request
+            window.currentAppraisalRequest = null;
+            showScreen('incidentForm');
+        }
+
+        function clearForm() {
+            document.getElementById('insuredName').value = '';
+            document.getElementById('policyNumber').value = '';
+            document.getElementById('incidentDetails').value = '';
+            document.getElementById('lossConsultDetails').value = '';
+            document.getElementById('requestAppraisal').checked = false;
+            document.getElementById('appraisalStatus').innerHTML = '';
+        }
+
+        // Form validation
+        function validateForm() {
+            const insuredName = document.getElementById('insuredName').value.trim();
+            const policyNumber = document.getElementById('policyNumber').value.trim();
+            const incidentDetails = document.getElementById('incidentDetails').value.trim();
+
+            if (!insuredName || !policyNumber || !incidentDetails) {
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            return true;
+        }
+
+        // Generate random IDs
+        function generateIncidentId() {
+            return `NewEco-INC-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+        }
+
+        function generateClaimId() {
+            return `CHP-Claim-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+        }
+
+        function generateAppraisalId() {
+            return `CCC-APP-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+        }
+
+        // Handle appraisal checkbox change
+        document.getElementById('requestAppraisal').addEventListener('change', function() {
+            if (this.checked) {
+                if (!validateForm()) {
+                    this.checked = false;
+                    return;
+                }
+
+                const incidentId = generateIncidentId(); // Generate an incident ID even if not submitted yet
+                const insuredName = document.getElementById('insuredName').value.trim();
+                
+                // Add to appraisal queue immediately
+                const appraisalRequest = {
+                    id: Date.now(),
+                    incidentId: incidentId, // Use the generated incidentId for manual requests
+                    insuredName: insuredName,
+                    timestamp: new Date().toLocaleTimeString(),
+                    source: 'Manual from NewEco',
+                    processed: false,
+                    isManualRequest: true
+                };
+                
+                appraisalQueue.push(appraisalRequest);
+                
+                // Show waiting message
+                document.getElementById('appraisalStatus').innerHTML = 
+                    '<div class="warning-message">Appraisal request queued. Waiting for CCC response...</div>';
+                
+                // Start polling for response using the generated incidentId
+                startAppraisalPolling(incidentId);
+                
+                // Store the current request for later reference
+                window.currentAppraisalRequest = {
+                    incidentId: incidentId,
+                    insuredName: insuredName,
+                    submitted: false
+                };
+                
+                updateAllPanels();
+            } else {
+                document.getElementById('appraisalStatus').innerHTML = '';
+                // Clear any pending polling
+                if (window.currentAppraisalRequest) {
+                    const incidentId = window.currentAppraisalRequest.incidentId;
+                    if (pendingAppraisalChecks.has(incidentId)) {
+                        clearInterval(pendingAppraisalChecks.get(incidentId));
+                        pendingAppraisalChecks.delete(incidentId);
+                    }
+                }
+                window.currentAppraisalRequest = null;
+            }
+        });
+
+        // Start polling for appraisal response
+        function startAppraisalPolling(incidentId) {
+            const pollInterval = setInterval(() => {
+                const completedAppraisal = appraisalQueue.find(req => 
+                    req.incidentId === incidentId && req.appraisalId && req.isManualRequest
+                );
+                
+                if (completedAppraisal) {
+                    document.getElementById('appraisalStatus').innerHTML = 
+                        `<div class="success-message">Appraisal completed! ID: ${completedAppraisal.appraisalId}</div>`;
+                    clearInterval(pollInterval);
+                    pendingAppraisalChecks.delete(incidentId);
+                }
+            }, 2000);
+            
+            pendingAppraisalChecks.set(incidentId, pollInterval);
+        }
+
+        // Submit incident
+        function submitIncident() {
+            if (!validateForm()) {
+                return;
+            }
+
+            const insuredName = document.getElementById('insuredName').value.trim();
+            const policyNumber = document.getElementById('policyNumber').value.trim();
+            const incidentDetails = document.getElementById('incidentDetails').value.trim();
+            const appraisalRequested = document.getElementById('requestAppraisal').checked;
+
+            let incidentId, claimId, appraisalId = '', appraisalStatus = 'No Appraisal';
+
+            // Always generate a claim ID for the new incident
+            claimId = generateClaimId();
+
+            // Check if this is a manual appraisal request that was already queued
+            if (appraisalRequested && window.currentAppraisalRequest) {
+                incidentId = window.currentAppraisalRequest.incidentId; // Use the same incident ID from the appraisal request
+                window.currentAppraisalRequest.submitted = true;
+                
+                const existingAppraisal = appraisalQueue.find(req => 
+                    req.incidentId === incidentId && req.appraisalId && req.isManualRequest
+                );
+                
+                if (existingAppraisal) {
+                    appraisalId = existingAppraisal.appraisalId;
+                    appraisalStatus = `Appraisal: ${appraisalId}`;
+                } else {
+                    appraisalStatus = 'Appraisal Pending';
+                }
+            } else {
+                // If no manual appraisal was requested, generate a new incident ID
+                incidentId = generateIncidentId();
+            }
+
+            const incident = {
+                incidentId: incidentId,
+                insuredName: insuredName,
+                policyNumber: policyNumber,
+                incidentDetails: incidentDetails,
+                claimId: claimId,
+                appraisalRequested: appraisalRequested,
+                appraisalId: appraisalId,
+                appraisalStatus: appraisalStatus,
+                chpAutoAppraisal: false, // Flag to track if auto-appraisal is triggered by CHP
+                autoAppraisalSource: '',
+                timestamp: new Date().toLocaleString(),
+                hasManualAppraisal: appraisalRequested // Track if this incident initiated a manual appraisal request
+            };
+
+            incidents.push(incident);
+
+            // If no manual appraisal was requested for this incident, schedule auto-appraisal
+            if (!appraisalRequested) {
+                scheduleAutoAppraisal(incident);
+            }
+
+            // Show confirmation
+            document.getElementById('confirmationDetails').innerHTML = `
+                <p><strong>Incident Number:</strong> ${incidentId}</p>
+                <p><strong>Claim Number:</strong> ${claimId}</p>
+                <p><strong>Appraisal Status:</strong> ${appraisalStatus}</p>
+            `;
+
+            showScreen('submitConfirmationScreen');
+            updateAllPanels();
+        }
+
+        // Schedule auto-appraisal for claims without manual appraisal
+        function scheduleAutoAppraisal(incident) {
+            // Only schedule auto-appraisal if there was no manual appraisal request for this incident
+            if (incident.hasManualAppraisal) {
+                return;
+            }
+            
+            const timeoutId = setTimeout(() => {
+                // Ensure no manual appraisal has happened and auto-appraisal hasn't been triggered yet
+                if (!incident.appraisalRequested && !incident.chpAutoAppraisal) {
+                    // Trigger CCC appraisal box to glow and change color
+                    const cccBox = document.getElementById('cccAppraisalBox');
+                    cccBox.classList.add('active');
+                    
+                    // Mark as auto-appraisal processing
+                    incident.chpAutoAppraisal = true;
+                    incident.appraisalStatus = 'Auto Appraisal Processing';
+                    incident.autoAppraisalSource = 'Auto from Legacy Claims System'; // Updated source
+
+                    // Add to CCC queue, using claimId instead of incidentId for auto-appraisal
+                    const appraisalRequest = {
+                        id: Date.now(),
+                        incidentId: incident.claimId, // Use claimId for auto-appraisal requests
+                        insuredName: incident.insuredName,
+                        timestamp: new Date().toLocaleTimeString(),
+                        source: 'Auto from Legacy Claims System', // Updated source
+                        processed: false,
+                        isManualRequest: false
+                    };
+                    
+                    appraisalQueue.push(appraisalRequest);
+                    updateAllPanels();
+
+                    // Reset the CCC box color after a few seconds
+                    setTimeout(() => {
+                        cccBox.classList.remove('active');
+                    }, 4000);
+                }
+                autoAppraisalTimeouts.delete(incident.incidentId);
+            }, 5000);
+
+            autoAppraisalTimeouts.set(incident.incidentId, timeoutId);
+        }
+
+        // Process CCC appraisal queue
+        function processCCCQueue() {
+            const unprocessedRequests = appraisalQueue.filter(req => !req.processed && !req.beingProcessed);
+            
+            unprocessedRequests.forEach(request => {
+                // Mark as being processed to prevent duplicate processing
+                request.beingProcessed = true;
+                
+                // For manual requests, process within 5-30 seconds
+                // For auto requests, process within 5-10 seconds
+                const delay = request.isManualRequest ? 
+                    Math.random() * 25000 + 5000 : // 5-30 seconds for manual
+                    Math.random() * 5000 + 5000;   // 5-10 seconds for auto
+                
+                console.log(`Processing ${request.source} request for ${request.incidentId} in ${Math.round(delay/1000)} seconds`);
+                
+                setTimeout(() => {
+                    const appraisalId = generateAppraisalId();
+                    request.appraisalId = appraisalId;
+                    request.processed = true;
+                    request.completedTime = new Date().toLocaleTimeString();
+                    
+                    latestAppraisal = request;
+
+                    // Update related incident or send to submitted incident
+                    let relatedIncident;
+                    if (request.isManualRequest) {
+                        relatedIncident = incidents.find(inc => inc.incidentId === request.incidentId);
+                    } else {
+                        relatedIncident = incidents.find(inc => inc.claimId === request.incidentId); // Match by claimId for auto
+                    }
+
+                    if (relatedIncident) {
+                        relatedIncident.appraisalId = appraisalId;
+                        if (request.source === 'Auto from Legacy Claims System') { // Updated source
+                            relatedIncident.appraisalStatus = `Auto Appraisal: ${appraisalId}`;
+                        } else {
+                            relatedIncident.appraisalStatus = `Appraisal: ${appraisalId}`;
+                        }
+                    } else if (request.isManualRequest && window.currentAppraisalRequest && 
+                             window.currentAppraisalRequest.incidentId === request.incidentId) {
+                        // If this is for a current manual request that hasn't been submitted yet
+                        if (!window.currentAppraisalRequest.submitted) {
+                            // Not submitted yet, update NewEco display
+                            document.getElementById('appraisalStatus').innerHTML = 
+                                `<div class="success-message">Appraisal completed! ID: ${appraisalId}</div>`;
+                        }
+                    }
+
+                    updateAllPanels();
+                }, delay);
+            });
+        }
+
+        // Update all panels
+        function updateAllPanels() {
+            updateCCCPanel();
+            updateCHPPanel();
+        }
+
+        // Update CCC Appraisal Panel
+        function updateCCCPanel() {
+            const pendingCount = appraisalQueue.filter(req => !req.appraisalId).length;
+            
+            // Update status
+            document.getElementById('cccStatus').innerHTML = 
+                pendingCount > 0 ? `${pendingCount} pending request(s)` : 'No pending requests';
+
+            // Update latest assignment
+            if (latestAppraisal) {
+                document.getElementById('latestAssignment').innerHTML = `
+                    <strong>Appraisal ID:</strong> ${latestAppraisal.appraisalId}<br>
+                    <strong>Request ID:</strong> ${latestAppraisal.incidentId} <small>(${latestAppraisal.source})</small><br>
+                    <strong>Insured:</strong> ${latestAppraisal.insuredName}<br>
+                    <strong>Completed:</strong> ${latestAppraisal.completedTime}
+                `;
+            }
+
+            // Update request queue
+            const queueHtml = appraisalQueue
+                .filter(req => !req.appraisalId)
+                .map(req => `
+                    <div class="queue-item">
+                        <div class="processing-indicator"></div>
+                        <div>
+                            <strong>${req.incidentId}</strong> - ${req.insuredName}<br>
+                            <small>(${req.source})</small>
+                        </div>
+                        <div class="timestamp">${req.timestamp}</div>
+                    </div>
+                `).join('');
+
+            document.getElementById('requestQueue').innerHTML = 
+                queueHtml || '<div class="no-items">No requests in queue</div>';
+        }
+
+        // Update CHP Claims Panel
+        function updateCHPPanel() {
+            const claimCount = incidents.length;
+            
+            // Update status
+            document.getElementById('claimsStatus').innerHTML = `${claimCount} claim(s) displayed`;
+
+            // Update claims list
+            const claimsHtml = incidents.map(incident => {
+                let statusClass = 'status-pending';
+                if (incident.appraisalId) {
+                    statusClass = 'status-completed';
+                } else if (incident.appraisalStatus.includes('Processing') || incident.appraisalStatus.includes('Pending')) {
+                    statusClass = 'status-processing';
+                }
+
+                return `
+                    <div class="claim-item">
+                        <div class="claim-header">
+                            <div class="status-dot ${statusClass}"></div>
+                            <div class="claim-id">${incident.claimId}</div>
+                        </div>
+                        <div class="claim-details">
+                            <strong>Incident:</strong> ${incident.incidentId}<br>
+                            <strong>Insured:</strong> ${incident.insuredName}
+                        </div>
+                        <div class="appraisal-status">${incident.appraisalStatus}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('claimsList').innerHTML = 
+                claimsHtml || '<div class="no-items">No claims submitted</div>';
+        }
+
+        // Refresh claims (manual refresh button)
+        function refreshClaims() {
+            updateCHPPanel();
+        }
+
+        // Initialize system when page loads
+        window.addEventListener('load', initSystem);
+    </script>
+</body>
+</html>
+```
