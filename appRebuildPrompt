@@ -1,0 +1,162 @@
+To obtain the HTML application exactly as described in the provided `incident_management_sim.html` file, you would give an LLM the following comprehensive prompt:
+
+---
+
+**Prompt to Rebuild the Integrated Incident Management System HTML Application**
+
+"You are an expert web developer specializing in creating functional and well-structured HTML, CSS, and JavaScript applications. Your task is to generate the complete and exact HTML code for an 'Integrated Incident Management System' application. This application consists of a single HTML file that includes all CSS styles within a `<style>` block in the `<head>` section and all JavaScript logic within a `<script>` block at the end of the `<body>` section.
+
+**Application Structure and Layout:**
+
+The application layout uses a CSS Grid system for a two-column, three-row layout on larger screens, adapting to a single-column layout on smaller screens (max-width: 1200px). The main container has a `max-width` of 1400px and is centered.
+
+There are three main panels:
+1.  **NewEco Panel (Left)**: This panel occupies the entire left column (or top row on smaller screens) and contains the incident submission form and related screens.
+2.  **CCC Appraisal Panel (Top Right)**: This panel is in the top right column (or second row on smaller screens) and displays CCC appraisal status and queues.
+3.  **Legacy Claims System Panel (Bottom Right)**: This panel is in the bottom right column (or third row on smaller screens) and displays claim information and system status boxes.
+
+**Panel Headers:**
+
+Each panel has a header with a specific background gradient and a "System Online" status indicator.
+* **NewEco**: `neweco-header` gradient (`#2c3e50` to `#34495e`).
+* **CCC Appraisal**: `ccc-header` gradient (`#1a365d` to `#2d5aa0`).
+* **Legacy Claims System**: `chp-header` gradient (`#8b1538` to `#c53030`).
+
+**NewEco Panel Functionality (Left Panel):**
+
+This panel manages incident creation and loss consultation.
+* **Incident Form (`#incidentForm`)**:
+    * Fields: "Insured Name" (text input `id="insuredName"`), "Policy Number" (text input `id="policyNumber"`), "Incident Details" (textarea `id="incidentDetails"`).
+    * Checkbox: "Request appraisal from CCC" (checkbox `id="requestAppraisal"`).
+    * Status Display: An empty `div` with `id="appraisalStatus"` to show appraisal request status.
+    * Buttons: "Loss Consult" (triggers `showLossConsult()`), "Submit Incident" (triggers `submitIncident()`).
+* **Loss Consult Screen (`#lossConsultScreen`)**:
+    * Field: "Additional Details" (textarea `id="lossConsultDetails"`).
+    * Buttons: "Save" (triggers `saveLossConsult()`), "Back" (triggers `showIncidentForm()`).
+* **Loss Saved Screen (`#lossSavedScreen`)**:
+    * Displays a success message "Loss Consult Saved Successfully".
+    * Button: "Back to Incident" (triggers `showIncidentForm()`).
+* **Submit Confirmation Screen (`#submitConfirmationScreen`)**:
+    * Displays a success message "Incident Submitted Successfully".
+    * Details: An empty `div` with `id="confirmationDetails"` that will be populated with incident and claim numbers, and appraisal status after submission.
+    * Button: "Create New Incident" (triggers `createNewIncident()`).
+
+**JavaScript Logic for NewEco Panel:**
+* **`initSystem()`**: Calls `updateAllPanels()` every 2 seconds and `processCCCQueue()` every 3 seconds.
+* **Screen Management**:
+    * `showScreen(screenId)`: Hides all `.screen` elements and shows the one with the given `screenId`.
+    * `showIncidentForm()`, `showLossConsult()`, `saveLossConsult()`, `createNewIncident()`: Functions to manage screen visibility.
+* **`clearForm()`**: Clears all input fields in the incident form and the appraisal status message. It also sets `window.currentAppraisalRequest` to `null`.
+* **`validateForm()`**: Checks if "Insured Name", "Policy Number", and "Incident Details" are filled. Alerts the user if not.
+* **ID Generation**:
+    * `generateIncidentId()`: Returns a unique ID like `NewEco-INC-XXX`.
+    * `generateClaimId()`: Returns a unique ID like `CHP-Claim-XXX`.
+    * `generateAppraisalId()`: Returns a unique ID like `CCC-APP-XXXX`.
+* **`requestAppraisal` Checkbox `change` event listener**:
+    * If checked: Validates the form. If valid, generates a temporary `incidentId`, creates an `appraisalRequest` object (`source: 'Manual from NewEco'`, `isManualRequest: true`), pushes it to `appraisalQueue`, displays a warning message in `appraisalStatus`, calls `startAppraisalPolling()` with the temporary `incidentId`, and stores the request in `window.currentAppraisalRequest`.
+    * If unchecked: Clears `appraisalStatus` and any pending polling for `window.currentAppraisalRequest`.
+* **`startAppraisalPolling(incidentId)`**: Sets up an interval to check `appraisalQueue` for a completed manual appraisal matching the `incidentId`. Upon completion, updates `appraisalStatus` with the appraisal ID and clears the interval.
+* **`submitIncident()`**:
+    * Validates the form.
+    * Retrieves form values.
+    * Generates a `claimId`.
+    * If `requestAppraisal` is checked and `window.currentAppraisalRequest` exists: Uses the `incidentId` from `window.currentAppraisalRequest`. Sets `window.currentAppraisalRequest.submitted = true`. Checks if the manual appraisal is already completed in `appraisalQueue`; if so, uses its `appraisalId`. Otherwise, sets `appraisalStatus` to 'Appraisal Pending'.
+    * If `requestAppraisal` is NOT checked: Generates a new `incidentId`.
+    * Creates an `incident` object including `incidentId`, `claimId`, `appraisalRequested`, `appraisalId`, `appraisalStatus`, `chpAutoAppraisal: false`, `autoAppraisalSource: ''`, `timestamp`, and `hasManualAppraisal` (set to `appraisalRequested`).
+    * Pushes the new `incident` to the `incidents` array.
+    * **Crucially, if `appraisalRequested` is `false`, calls `scheduleAutoAppraisal(incident)`.**
+    * Updates `confirmationDetails` with incident, claim, and appraisal status.
+    * Shows `submitConfirmationScreen`.
+    * Calls `updateAllPanels()`.
+* **`scheduleAutoAppraisal(incident)`**:
+    * This function is called when an incident is submitted *without* a manual appraisal request (`incident.hasManualAppraisal` is `false`).
+    * Sets a `setTimeout` for 5 seconds.
+    * Inside the timeout:
+        * Checks if `incident.appraisalRequested` is `false` and `incident.chpAutoAppraisal` is `false` to prevent double-triggering.
+        * Adds the `active` class to the `cccAppraisalBox` (which will glow due to CSS animation).
+        * Sets `incident.chpAutoAppraisal = true` and `incident.appraisalStatus = 'Auto Appraisal Processing'`.
+        * Sets `incident.autoAppraisalSource = 'Auto from Legacy Claims System'`.
+        * Creates an `appraisalRequest` object (`id`, `incidentId: incident.claimId` (this is the key change!), `insuredName`, `timestamp`, `source: 'Auto from Legacy Claims System'`, `processed: false`, `isManualRequest: false`).
+        * Pushes this `appraisalRequest` to `appraisalQueue`.
+        * Calls `updateAllPanels()`.
+        * Resets `cccAppraisalBox` color after 4 seconds by removing the `active` class.
+        * Deletes the timeout from `autoAppraisalTimeouts`.
+
+**CCC Appraisal Panel Functionality (Top Right Panel):**
+
+Displays the status and queue of CCC appraisal requests.
+* **Status Message (`#cccStatus`)**: Shows the number of pending requests or "No pending requests".
+* **Latest Assignment (`#latestAssignment`)**: Displays details of the most recently completed appraisal.
+* **Request Queue (`#requestQueue`)**: Lists pending appraisal requests with a pulsating indicator.
+
+**JavaScript Logic for CCC Appraisal Panel:**
+* **`processCCCQueue()`**:
+    * Filters `appraisalQueue` for unprocessed requests.
+    * For each unprocessed request:
+        * Sets `request.beingProcessed = true`.
+        * Calculates a random `delay`: 5-30 seconds for manual requests, 5-10 seconds for auto requests.
+        * Sets a `setTimeout` for the calculated delay.
+        * Inside the timeout:
+            * Generates an `appraisalId`.
+            * Sets `request.appraisalId`, `request.processed = true`, and `request.completedTime`.
+            * Sets `latestAppraisal = request`.
+            * Finds the `relatedIncident` in the `incidents` array:
+                * If `request.isManualRequest`, matches by `incident.incidentId`.
+                * **If NOT `request.isManualRequest` (auto-appraisal), matches by `incident.claimId` (this is the key change!).**
+            * If `relatedIncident` is found, updates its `appraisalId` and `appraisalStatus` (distinguishing between "Auto Appraisal" and "Appraisal").
+            * If it's a manual request that hasn't been submitted yet (`window.currentAppraisalRequest` exists and `submitted` is `false`), updates the `appraisalStatus` div in the NewEco panel.
+            * Calls `updateAllPanels()`.
+* **`updateCCCPanel()`**: Updates the content of `#cccStatus`, `#latestAssignment`, and `#requestQueue` based on the `appraisalQueue` and `latestAppraisal` data.
+
+**Legacy Claims System Panel Functionality (Bottom Right Panel):**
+
+Displays submitted claims and related system statuses.
+* **Panel Header**: Renamed from "CHP Claims" to "Legacy Claims System".
+* **Status Message (`#claimsStatus`)**: Shows the number of claims displayed.
+* **Status Boxes (`.status-boxes`)**: This `div` containing three `status-box` elements is **located inside** the `panel-content` of the `Legacy Claims System` panel.
+    * `#cccAppraisalBox`: Displays "CCC Appraisal". Its content is updated by JS. It has an `active` class added/removed to trigger a glow effect.
+    * Two generic "Other System 1" and "Other System 2" status boxes.
+* **Refresh Button**: A button with class `btn-red` and text "Refresh Claims" that triggers `refreshClaims()`.
+* **Claims List (`#claimsList`)**: Displays a list of claims submitted, showing their status (pending, processing, completed) with a colored dot.
+
+**JavaScript Logic for Legacy Claims System Panel:**
+* **`updateCHPPanel()`**:
+    * Updates the text content of `#claimsStatus` with the current count of incidents.
+    * Generates HTML for each `incident` in the `incidents` array, displaying `claimId`, `incidentId`, `insuredName`, and `appraisalStatus`.
+    * Applies `status-pending`, `status-processing`, or `status-completed` classes to a `status-dot` based on `incident.appraisalId` and `appraisalStatus`.
+    * Updates the content of `#claimsList`.
+* **`refreshClaims()`**: Simply calls `updateCHPPanel()`.
+
+**Global Variables:**
+* `incidents`: Array to store all submitted incident data.
+* `appraisalQueue`: Array to store pending CCC appraisal requests.
+* `latestAppraisal`: Stores the most recently completed appraisal request.
+* `pendingAppraisalChecks`: Map to store `setInterval` IDs for polling manual appraisal requests.
+* `autoAppraisalTimeouts`: Map to store `setTimeout` IDs for auto-appraisal triggers.
+* `window.currentAppraisalRequest`: Object to temporarily hold details of a manual appraisal request while the NewEco form is active.
+
+**CSS Styling:**
+
+All CSS rules should be included in the `<style>` block. Ensure:
+* Reset styles (`margin`, `padding`, `box-sizing`).
+* Layout for `.container`, `.panel`, `.left-panel`, `.top-right-panel`, `.bottom-right-panel`.
+* Styling for `.panel-header`, `.status-online`.
+* Styling for form elements: `.form-group`, `label`, `input`, `textarea`, `.checkbox-group`.
+* Styling for buttons: `.button-group`, `.btn`, `.btn-blue`, `.btn-green`, `.btn-red`, including hover effects.
+* Styling for screen visibility: `.screen`, `.screen.active`.
+* Styling for status and message boxes: `.status-message`, `.success-message`, `.warning-message`.
+* Styling for queues and claims lists: `.queue-item`, `.processing-indicator` (with `@keyframes pulse`), `.claim-item`, `.claim-header`, `.status-dot` (with `status-pending`, `status-processing`, `status-completed` classes), `.claim-id`, `.claim-details`, `.appraisal-status`, `.section-title`, `.latest-assignment`, `.timestamp`, `.no-items`.
+* **Specific CSS for `.status-boxes`**: `display: flex; gap: 10px; height: 120px; margin-top: 20px;`.
+* **Specific CSS for `.status-box`**: `flex: 1; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: all 0.3s ease;`.
+* Styling for `.status-box h3`, `.status-box.grey`, `.status-box.active` (with `@keyframes glow`).
+* Media queries for responsive design (`@media (max-width: 1200px)`) to adjust grid layout.
+
+**Code Quality Requirements:**
+* All code must be self-contained within the single HTML file.
+* The code must be production-ready, clean, well-commented, and maintainable.
+* Adhere strictly to the described functionality and visual appearance.
+* Ensure all IDs and class names mentioned are used exactly as specified.
+
+Your response should be the complete and exact HTML file, ready to be saved and run in a web browser, replicating the described integrated incident management system."
+
+---
