@@ -18,8 +18,8 @@ jobs:
           server_address: smtp.gmail.com
           server_port: 587
           secure: false
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
+          username: sajjadalam6@gmail.com
+          password: TASAMay31!
           subject: "[Code Review Request] ${{ github.repository }} - ${{ github.ref_name }}"
           to: sajjad_alam@epam.com
           from: sajjadalam6@gmail.com
