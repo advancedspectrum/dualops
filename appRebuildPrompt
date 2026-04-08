@@ -2,7 +2,7 @@ To obtain the HTML application exactly as described in the provided `incident_ma
 
 ---
 
-**Prompt to Rebuild the Integrated Incident Management System HTML Application** -Sajjad
+**Prompt to Rebuild the Integrated Incident Management System HTML Application** -Sajjad Alam
 
 "You are an expert web developer specializing in creating functional and well-structured HTML, CSS, and JavaScript applications. Your task is to generate the complete and exact HTML code for an 'Integrated Incident Management System' application. This application consists of a single HTML file that includes all CSS styles within a `<style>` block in the `<head>` section and all JavaScript logic within a `<script>` block at the end of the `<body>` section.
 
