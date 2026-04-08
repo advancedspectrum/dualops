@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "[Code Review Request] ${{ github.repository }} - ${{ github.ref_name }}"
           to: sajjad_alam@epam.com
-          from: ${{ secrets.MAIL_USERNAME }}
+          from: sajjadalam6@hotmail.com
           body: |
             An independent code review has been requested.
 
